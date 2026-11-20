@@ -8,6 +8,7 @@ import {
 } from "~/components/CollectionCard";
 import { HomeHero } from "~/components/HomeHero";
 import { ProductCard, PRODUCT_CARD_FRAGMENT, type ProductCardData } from "~/components/ProductCard";
+import { HOME_VENDOR_QUERY, isHomeCollection, isHomeVendor } from "~/lib/catalog";
 import { selectHomeHero } from "~/lib/home-hero";
 import { storefrontClientContext } from "~/lib/storefront";
 import {
@@ -21,18 +22,18 @@ import type { Route } from "./+types/home";
 
 const HOME_QUERY = gql(
   `
-    query Home {
-      products(first: 8, sortKey: CREATED_AT, reverse: true) {
+    query Home($vendorQuery: String!) {
+      products(first: 8, sortKey: CREATED_AT, reverse: true, query: $vendorQuery) {
         nodes {
           ...ProductCard
         }
       }
-      collections(first: 3) {
+      collections(first: 3, query: "handle:la-roche-posay OR handle:kerastase") {
         nodes {
           ...CollectionCard
         }
       }
-      heroCollections: collections(first: 1, sortKey: UPDATED_AT, reverse: true) {
+      heroCollections: collections(first: 2, query: "handle:la-roche-posay OR handle:kerastase") {
         nodes {
           title
           handle
@@ -69,15 +70,21 @@ export function meta({ matches }: Route.MetaArgs) {
 
 export async function loader({ context }: Route.LoaderArgs) {
   const storefrontClient = context.get(storefrontClientContext);
-  const { data } = await storefrontClient.graphql(HOME_QUERY);
+  const { data } = await storefrontClient.graphql(HOME_QUERY, {
+    variables: { vendorQuery: HOME_VENDOR_QUERY },
+  });
 
-  // New arrivals: the most recently created products (by creation date, not
-  // publication date), newest first, in the order the Storefront API returns.
-  const featuredProducts: ProductCardData[] = data?.products.nodes ?? [];
-  const featuredCollections: CollectionCardData[] = data?.collections.nodes ?? [];
+  const featuredProducts: ProductCardData[] = (data?.products.nodes ?? []).filter((product) =>
+    isHomeVendor(product.vendor),
+  );
+  const featuredCollections: CollectionCardData[] = (data?.collections.nodes ?? []).filter((collection) =>
+    isHomeCollection(collection.handle),
+  );
   // The hero features the most recently updated collection, independent of the
   // category list above.
-  const heroCollections = data?.heroCollections.nodes ?? [];
+  const heroCollections = (data?.heroCollections.nodes ?? []).filter((collection) =>
+    isHomeCollection(collection.handle),
+  );
 
   return {
     featuredProducts,

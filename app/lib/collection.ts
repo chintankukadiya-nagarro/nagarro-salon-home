@@ -3,6 +3,7 @@ import type { StorefrontClient } from "@shopify/hydrogen";
 import type { ProductFilter as StorefrontApiProductFilter } from "@shopify/hydrogen/storefront-api-types";
 
 import { PRODUCT_CARD_FRAGMENT } from "~/components/ProductCard";
+import { isHomeCollection } from "~/lib/catalog";
 
 export const COLLECTION_PAGE_SIZE = 9;
 
@@ -85,6 +86,8 @@ export async function loadCollectionPage({
   handle: string;
   request: Request;
 }) {
+  if (!isHomeCollection(handle)) throw new Response("Collection not found", { status: 404 });
+
   const url = new URL(request.url);
   const browse = parseCollectionParams(url.searchParams);
   const after = url.searchParams.get("after") || undefined;

@@ -3,6 +3,7 @@ import type { StorefrontClient } from "@shopify/hydrogen";
 import type { ProductFilter as StorefrontApiProductFilter } from "@shopify/hydrogen/storefront-api-types";
 
 import { PRODUCT_CARD_FRAGMENT } from "~/components/ProductCard";
+import { HOME_VENDOR_QUERY, isHomeVendor } from "~/lib/catalog";
 
 export const SEARCH_PAGE_SIZE = 9;
 
@@ -131,7 +132,7 @@ export async function loadSearchPage({
   const sortKey = browse.sortKey === "PRICE" ? "PRICE" : "RELEVANCE";
 
   const variables: SearchQueryVariables = {
-    term: searchTerm,
+    term: `(${searchTerm}) AND (${HOME_VENDOR_QUERY})`,
     first: SEARCH_PAGE_SIZE,
     after,
     productFilters:
@@ -145,7 +146,7 @@ export async function loadSearchPage({
   if (!data?.search) throw new Response("Search unavailable", { status: 502 });
 
   const products = data.search.nodes.filter(
-    (node): node is SearchProductNode => node.__typename === "Product",
+    (node): node is SearchProductNode => node.__typename === "Product" && isHomeVendor(node.vendor),
   );
 
   return {

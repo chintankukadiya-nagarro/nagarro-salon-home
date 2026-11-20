@@ -23,6 +23,10 @@ export type CustomerAccount = {
 // `null` when Customer Accounts are unavailable (see `createRequestCustomerAccount`).
 export const customerAccountContext = createContext<CustomerAccount | null>(null);
 
+export function getCustomerSession() {
+  return cached?.session ?? null;
+}
+
 // Reused across requests so concurrent token refreshes for the same customer
 // share one request to Shopify.
 let cached:

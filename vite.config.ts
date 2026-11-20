@@ -1,3 +1,6 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { reactRouter } from "@react-router/dev/vite";
 import { localHttps } from "@shopify/hydrogen/vite";
 import { oxygen } from "@shopify/mini-oxygen/vite";
@@ -7,7 +10,8 @@ import { defineConfig } from "vite";
 const oxygenPlugins = oxygen();
 const oxygenPlugin = oxygenPlugins.find((plugin) => plugin.name === "oxygen:main");
 const enabled = process.env.npm_lifecycle_event === "dev:https";
-const httpsOptions = { enabled };
+const httpsOptions = { enabled, host: "127.0.0.1", port: 5175 };
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 if (!oxygenPlugin?.api) {
   throw new Error("MiniOxygen plugin API is unavailable.");
@@ -54,5 +58,6 @@ export default defineConfig({
   },
   server: {
     allowedHosts: [".tryhydrogen.dev"],
+    fs: { allow: [repoRoot] },
   },
 });

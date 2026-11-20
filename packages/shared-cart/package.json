@@ -1,0 +1,11 @@
+{
+  "name": "@loreal/shared-cart",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@shopify/hydrogen": "2026.10.2"
+  }
+}

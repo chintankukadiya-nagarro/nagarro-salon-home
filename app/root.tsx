@@ -15,17 +15,25 @@ import {
 import { CartAnalyticsTracker, PageViewedTracker } from "~/components/AnalyticsTrackers";
 import { AnnouncementBar } from "~/components/AnnouncementBar";
 import { CartDrawer } from "~/components/CartDrawer";
+import { CartFocusRefresh } from "~/components/CartFocusRefresh";
 import { Footer } from "~/components/Footer";
 import { Header } from "~/components/Header";
 import { SearchDrawer } from "~/components/SearchDrawer";
 import { CartProvider } from "~/lib/cart";
-import { cartHandlers } from "~/lib/cart-handlers";
-import { createRequestCustomerAccount, customerAccountContext } from "~/lib/customer-account";
+import { loadSharedCart, sharedCartHandlers } from "~/lib/cart-handlers";
+import { createRequestCustomerAccount, customerAccountContext, getCustomerSession } from "~/lib/customer-account";
 import { envContext } from "~/lib/env";
 import { predictiveSearchHandlers } from "~/lib/predictive-search-handlers";
 import { loadRootLayout } from "~/lib/root-layout";
 import { routeTemplates } from "~/lib/route-templates";
 import { createEphemeralSessionManager } from "~/lib/session";
+import {
+  EXPIRED_CART_COOKIE,
+  readCustomerAccessToken,
+  setCustomerSessionReader,
+  setSharedCartEnv,
+  sharedCheckoutRedirect,
+} from "@loreal/shared-cart";
 import { analyticsConsent, resolveShopIdentity, storefrontConfig } from "~/lib/shop";
 import {
   createRequestStorefrontClient,
@@ -36,6 +44,8 @@ import {
 import type { Route } from "./+types/root";
 
 import appStylesHref from "./app.css?url";
+
+setCustomerSessionReader(getCustomerSession);
 
 export const links: Route.LinksFunction = () => [
   { rel: "stylesheet", href: appStylesHref },
@@ -55,19 +65,41 @@ export const middleware: Route.MiddlewareFunction[] = [
     const customerAccount = await createRequestCustomerAccount(request, env, requestContext);
     const sessionManager =
       customerAccount?.customerAccount.sessionManager ?? createEphemeralSessionManager(request);
+    setSharedCartEnv(env);
+    const pathname = new URL(request.url).pathname;
+    if (customerAccount && (pathname === "/checkout" || pathname === "/api/shared-checkout")) {
+      const accessToken = await readCustomerAccessToken({
+        request,
+        sessionManager: customerAccount.customerAccount.sessionManager,
+        requestContext,
+      });
+      const checkout = await sharedCheckoutRedirect(request, accessToken, requestContext);
+      if (checkout) {
+        const sessionHeaders = new Headers(
+          (await customerAccount.customerAccount.sessionManager.commit?.()) ?? undefined,
+        );
+        for (const [name, value] of sessionHeaders) checkout.headers.append(name, value);
+        return checkout;
+      }
+    }
 
-    const shopifyRoute = handleShopifyRoutes({
+    const shopifyRoute = await handleShopifyRoutes({
       request,
       requestContext,
       sessionManager,
       storefrontClient,
       routeTemplates,
       handlers: customerAccount
-        ? [cartHandlers, predictiveSearchHandlers, customerAccount.handlers]
-        : [cartHandlers, predictiveSearchHandlers],
+        ? [sharedCartHandlers, predictiveSearchHandlers, customerAccount.handlers]
+        : [sharedCartHandlers, predictiveSearchHandlers],
     });
 
-    if (shopifyRoute) return shopifyRoute;
+    if (shopifyRoute) {
+      if (new URL(request.url).pathname === "/account/logout") {
+        shopifyRoute.headers.append("set-cookie", EXPIRED_CART_COOKIE);
+      }
+      return shopifyRoute;
+    }
 
     context.set(storefrontClientContext, storefrontClient);
     context.set(storefrontRequestContext, requestContext);
@@ -94,13 +126,16 @@ export const middleware: Route.MiddlewareFunction[] = [
 export async function loader({ context, request }: Route.LoaderArgs) {
   const env = context.get(envContext);
   const storefrontClient = context.get(storefrontClientContext);
-  const [cartResult, layout] = await Promise.all([
-    cartHandlers.get({ storefrontClient, request }),
+  const customerAccount = context.get(customerAccountContext);
+  const requestContext = context.get(storefrontRequestContext);
+  const sessionManager = customerAccount?.sessionManager ?? createEphemeralSessionManager(request);
+  const [cartLoaded, layout] = await Promise.all([
+    loadSharedCart({ storefrontClient, request, sessionManager, requestContext }),
     loadRootLayout(storefrontClient),
   ]);
 
   return {
-    cartData: cartResult.data,
+    cartData: cartLoaded.result.data,
     shopInfo: layout.shopInfo,
     shopIdentity: resolveShopIdentity(env, layout.shopId),
     currency: layout.currency,
@@ -151,6 +186,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     <CartProvider initialData={loaderData.cartData}>
       <PageViewedTracker />
       <CartAnalyticsTracker />
+      <CartFocusRefresh />
       <AnnouncementBar />
       <Header shopInfo={loaderData.shopInfo} />
       <Outlet />

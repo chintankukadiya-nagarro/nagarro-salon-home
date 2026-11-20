@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 
 import { ProductCard, PRODUCT_CARD_FRAGMENT } from "~/components/ProductCard";
+import { HOME_VENDOR_QUERY, isHomeVendor } from "~/lib/catalog";
 import { openCartDrawer } from "~/lib/cart-drawer";
 import { formatPrice, salePercent } from "~/lib/money";
 import { ProductProvider, useProductForm } from "~/lib/product";
@@ -54,7 +55,7 @@ const PRODUCT_VARIANT_FRAGMENT = gql(`
 
 const PRODUCT_QUERY = gql(
   `
-    query ProductPage($handle: String!, $selectedOptions: [SelectedOptionInput!]!) {
+    query ProductPage($handle: String!, $selectedOptions: [SelectedOptionInput!]!, $vendorQuery: String!) {
       product(handle: $handle) {
         id
         handle
@@ -123,7 +124,7 @@ const PRODUCT_QUERY = gql(
           ...ProductVariantFields
         }
       }
-      products(first: 5) {
+      products(first: 8, query: $vendorQuery) {
         nodes {
           ...ProductCard
         }
@@ -153,15 +154,15 @@ export async function loader({ context, params, request }: Route.LoaderArgs) {
     searchParams: new URL(request.url).searchParams,
   });
   const { data } = await storefrontClient.graphql(PRODUCT_QUERY, {
-    variables: { handle, selectedOptions },
+    variables: { handle, selectedOptions, vendorQuery: HOME_VENDOR_QUERY },
   });
 
-  if (!data?.product) throw new Response("Not Found", { status: 404 });
+  if (!data?.product || !isHomeVendor(data.product.vendor)) throw new Response("Not Found", { status: 404 });
 
   return {
     product: data.product,
     relatedProducts: data.products.nodes
-      .filter((product) => product.handle !== data.product?.handle)
+      .filter((product) => product.handle !== data.product?.handle && isHomeVendor(product.vendor))
       .slice(0, 4),
   };
 }

@@ -12,6 +12,7 @@
     "typecheck": "react-router typegen && tsc && hydrogen gql check --fail-on-warn"
   },
   "dependencies": {
+    "@loreal/shared-cart": "file:./packages/shared-cart",
     "@remix-run/cookie": "^0.6.0",
     "@remix-run/session": "^0.4.2",
     "@shopify/hydrogen": "2026.10.2",

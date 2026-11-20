@@ -7,6 +7,7 @@ export const PRODUCT_CARD_FRAGMENT = gql(`
   fragment ProductCard on Product {
     handle
     title
+    vendor
     featuredImage {
       url
       altText
