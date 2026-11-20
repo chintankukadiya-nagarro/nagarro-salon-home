@@ -23,7 +23,7 @@ export const CART_METAFIELD = {
 } as const;
 
 const VARIANT_ID = /^gid:\/\/shopify\/ProductVariant\/\d+$/;
-const LINE_ID = /^gid:\/\/shopify\/CartLine\/[A-Za-z0-9_-]+$/;
+const LINE_ID = /^gid:\/\/shopify\/CartLine\/[A-Za-z0-9_.:-]{1,200}(?:\?cart=gid:\/\/shopify\/Cart\/[^?&#\s]{1,300})?$/;
 const CUSTOMER_GID = /^gid:\/\/shopify\/Customer\/\d+$/;
 const MAX_SKEW_SECONDS = 90;
 

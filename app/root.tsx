@@ -13,6 +13,7 @@ import {
 } from "react-router";
 
 import { CartAnalyticsTracker, PageViewedTracker } from "~/components/AnalyticsTrackers";
+import { BrandBar } from "~/components/BrandBar";
 import { AnnouncementBar } from "~/components/AnnouncementBar";
 import { CartDrawer } from "~/components/CartDrawer";
 import { CartFocusRefresh } from "~/components/CartFocusRefresh";
@@ -22,6 +23,7 @@ import { SearchDrawer } from "~/components/SearchDrawer";
 import { CartProvider } from "~/lib/cart";
 import { loadSharedCart, sharedCartHandlers } from "~/lib/cart-handlers";
 import { createRequestCustomerAccount, customerAccountContext, getCustomerSession } from "~/lib/customer-account";
+import { brandBarLinks } from "~/lib/brand-bar";
 import { envContext } from "~/lib/env";
 import { predictiveSearchHandlers } from "~/lib/predictive-search-handlers";
 import { loadRootLayout } from "~/lib/root-layout";
@@ -139,6 +141,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
     shopInfo: layout.shopInfo,
     shopIdentity: resolveShopIdentity(env, layout.shopId),
     currency: layout.currency,
+    brandBar: brandBarLinks(env),
   };
 }
 
@@ -187,8 +190,11 @@ export default function App({ loaderData }: Route.ComponentProps) {
       <PageViewedTracker />
       <CartAnalyticsTracker />
       <CartFocusRefresh />
-      <AnnouncementBar />
-      <Header shopInfo={loaderData.shopInfo} />
+      <div className="sticky top-0 z-40">
+        <BrandBar links={loaderData.brandBar} />
+        <AnnouncementBar />
+        <Header shopInfo={loaderData.shopInfo} />
+      </div>
       <Outlet />
       <Footer shopInfo={loaderData.shopInfo} />
       <CartDrawer />
@@ -211,7 +217,13 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     stack = error.stack;
   }
 
+  const rootData = useRouteLoaderData<typeof loader>("root");
+
   return (
+    <>
+    <div className="sticky top-0 z-40">
+      <BrandBar links={rootData?.brandBar ?? brandBarLinks()} />
+    </div>
     <main
       id="main-content"
       tabIndex={-1}
@@ -225,5 +237,6 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         </pre>
       ) : null}
     </main>
+    </>
   );
 }

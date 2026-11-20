@@ -12,6 +12,8 @@ export type Env = {
   SHARED_CART_STOREFRONT_TOKEN?: string;
   SHOPIFY_CLIENT_ID?: string;
   SHOPIFY_CLIENT_SECRET?: string;
+  PUBLIC_LA_ROCHE_POSAY_URL?: string;
+  PUBLIC_KERASTASE_URL?: string;
 };
 
 export const envContext = createContext<Env>();
