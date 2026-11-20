@@ -5,21 +5,25 @@ export const CURRENT_BRAND: BrandId | null = null;
 export const LA_ROCHE_POSAY_COLOR = "#0057b8";
 export const KERASTASE_COLOR = "#5d0707";
 
+const LOCAL_HOME_URL = "https://127.0.0.1:5175";
 const LOCAL_LA_ROCHE_POSAY_URL = "https://local.tryhydrogen.dev:5173";
 const LOCAL_KERASTASE_URL = "https://127.0.0.1:5174";
 
 export type BrandBarLinks = {
+  home: string;
   laRochePosay: string;
   kerastase: string;
 };
 
 type BrandBarEnv = {
+  PUBLIC_HOME_URL?: string;
   PUBLIC_LA_ROCHE_POSAY_URL?: string;
   PUBLIC_KERASTASE_URL?: string;
 };
 
 export function brandBarLinks(env?: BrandBarEnv): BrandBarLinks {
   return {
+    home: storefrontOrigin(env?.PUBLIC_HOME_URL, LOCAL_HOME_URL),
     laRochePosay: storefrontOrigin(env?.PUBLIC_LA_ROCHE_POSAY_URL, LOCAL_LA_ROCHE_POSAY_URL),
     kerastase: storefrontOrigin(env?.PUBLIC_KERASTASE_URL, LOCAL_KERASTASE_URL),
   };

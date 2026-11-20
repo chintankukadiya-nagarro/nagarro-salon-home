@@ -15,9 +15,13 @@ export function BrandBar({ links }: { links: BrandBarLinks }) {
   return (
     <div className="bg-[#141414] text-white">
       <div className="max-w-page px-margin mx-auto flex h-10 items-center justify-between gap-4">
-        <p className="shrink-0 text-[11px] font-medium tracking-[0.16em] text-white/70 uppercase">
+        <a
+          href={links.home}
+          aria-current={CURRENT_BRAND === null ? "page" : undefined}
+          className="focus-visible:outline-white shrink-0 text-[11px] font-medium tracking-[0.16em] text-white/70 uppercase no-underline hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
           Beauty Diagnostics
-        </p>
+        </a>
         <nav aria-label="Brands" className="flex min-w-0 items-center gap-1 overflow-x-auto">
           {BRANDS.map((brand) => {
             const active = CURRENT_BRAND === brand.id;
