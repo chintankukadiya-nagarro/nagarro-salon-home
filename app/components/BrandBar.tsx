@@ -1,43 +1,36 @@
-import {
-  CURRENT_BRAND,
-  KERASTASE_COLOR,
-  LA_ROCHE_POSAY_COLOR,
-  type BrandBarLinks,
-  type BrandId,
-} from "~/lib/brand-bar";
+import { CURRENT_BRAND, type BrandBarLinks, type BrandId } from "~/lib/brand-bar";
 
-const BRANDS: { id: BrandId; name: string; color: string; hrefKey: keyof BrandBarLinks }[] = [
-  { id: "la-roche-posay", name: "La Roche-Posay", color: LA_ROCHE_POSAY_COLOR, hrefKey: "laRochePosay" },
-  { id: "kerastase", name: "Kérastase", color: KERASTASE_COLOR, hrefKey: "kerastase" },
+const BRANDS: { id: BrandId | null; name: string; hrefKey: keyof BrandBarLinks }[] = [
+  { id: "kerastase", name: "Kérastase", hrefKey: "kerastase" },
+  { id: "la-roche-posay", name: "La Roche-Posay", hrefKey: "laRochePosay" },
+  { id: null, name: "The House", hrefKey: "home" },
 ];
 
 export function BrandBar({ links }: { links: BrandBarLinks }) {
   return (
-    <div className="bg-[#141414] text-white">
-      <div className="max-w-page px-margin mx-auto flex h-10 items-center justify-between gap-4">
-        <a
-          href={links.home}
-          aria-current={CURRENT_BRAND === null ? "page" : undefined}
-          className="focus-visible:outline-white shrink-0 text-[11px] font-medium tracking-[0.16em] text-white/70 uppercase no-underline hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-          Beauty Diagnostics
-        </a>
-        <nav aria-label="Brands" className="flex min-w-0 items-center gap-1 overflow-x-auto">
+    <div className="bg-black text-xs tracking-[0.12em] text-white uppercase">
+      <p className="px-3 py-[9px] text-center text-[10px] tracking-[0.14em] md:hidden">
+        2 complimentary samples of your choice
+      </p>
+      <div className="mx-auto hidden max-w-[1360px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-10 py-2.5 md:flex">
+        <div className="flex flex-wrap items-center gap-5">
+          <span className="text-[#B3B3B3]">One bag:</span>
           {BRANDS.map((brand) => {
             const active = CURRENT_BRAND === brand.id;
             return (
               <a
-                key={brand.id}
+                key={brand.name}
                 href={links[brand.hrefKey]}
                 aria-current={active ? "page" : undefined}
-                className={`focus-visible:outline-white shrink-0 rounded-full px-3 py-1 text-sm no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors ${active ? "text-white" : "text-white/75 hover:text-white"}`}
-                style={active ? { backgroundColor: brand.color } : undefined}
+                className={`focus-visible:outline-white text-white no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 ${active ? "underline underline-offset-4" : ""}`}
               >
                 {brand.name}
               </a>
             );
           })}
-        </nav>
+        </div>
+        <span>2 complimentary samples of your choice</span>
+        <span>Find a salon</span>
       </div>
     </div>
   );
